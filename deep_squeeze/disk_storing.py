@@ -5,6 +5,8 @@ import joblib
 import torch
 import logging
 import json
+import shutil
+import os
 
 
 def store_on_disk(path, model, codes, failures, scaler, hyper_params):
@@ -42,4 +44,19 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     with open(path + 'hyper_params.json', 'w') as outfile:
         json.dump(hyper_params, outfile)
 
-    logging.info(f"Stored files in {path}.")
+    # Create a zipfile from the temporary folder that keeps our compression data
+    shutil.make_archive(path[:-1], 'zip', path)
+
+    # Delete the temporary folder
+    shutil.rmtree(path)
+
+    logging.info(f"Stored files in {path}.zip")
+
+    return path[:-1] + '.zip'
+
+
+def calculate_compression_ratio(original_file_path, compressed_file_path):
+    orig_size = os.path.getsize(original_file_path)
+    compress_size = os.path.getsize(compressed_file_path)
+
+    return compress_size / orig_size, compress_size, orig_size
