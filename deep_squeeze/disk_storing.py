@@ -26,9 +26,15 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     torch.save(model.state_dict(), path + "model.pth")
 
     # Store the codes in a parquet file
-    codes_df = pd.DataFrame(codes, columns=None)
-    codes_df.columns = codes_df.columns.astype(str)
-    codes_df.to_parquet(path + "codes.parquet", index=False)
+    if len(codes) == 2:
+        codes_df = pd.DataFrame(codes, columns=None)
+        codes_df.columns = codes_df.columns.astype(str)
+        codes_df.to_parquet(path + "codes.parquet", index=False)
+    else:
+        for ind, expert_code in enumerate(codes):
+            codes_df = pd.DataFrame(expert_code, columns=None)
+            codes_df.columns = codes_df.columns.astype(str)
+            codes_df.to_parquet(path + f"codes_{ind}.parquet", index=False)
 
     # Store the failures in a parquet file
     failures_df = pd.DataFrame(failures, columns=None)

@@ -21,11 +21,16 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
             # Get the batch data and put them to device
             original_rows = original_rows.float().to(device)
 
+            # In the MoE case we need to add a new axis to match the expected input shape
+            original_rows = original_rows.reshape(original_rows.shape[0], 1, original_rows.shape[1])
+
             # Perform forward pass
-            recon_rows = model(original_rows)
+            recon_rows, gate_loss = model(original_rows)
 
             # Calculate loss
-            loss = criterion(recon_rows, original_rows)
+            recon_loss = criterion(recon_rows, original_rows)
+            loss = recon_loss + gate_loss
+            # print(f"Recon loss: {recon_loss} | Gate loss {gate_loss}")
             # loss = custom_loss(recon_rows, original_rows, epoch / epochs)
 
             # Calculate the gradients
@@ -36,7 +41,7 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
             optimizer.zero_grad()
 
             # Book-keeping
-            epoch_loss += loss
+            epoch_loss += recon_loss
 
         print(f"> Epoch: {epoch + 1} / {epochs} | "
               f"{type(criterion).__name__}: {float(epoch_loss / len(train_loader)):.3f}\n")
@@ -44,7 +49,7 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
     return model, epoch_loss / len(train_loader)
 
 
-def custom_loss(recon, orig, epoch_frac):
+def scheduled_mse_mae_loss(recon, orig, epoch_frac):
     mse_loss = torch.mean((recon - orig) ** 2)
     mae_loss = torch.mean(torch.abs(recon - orig))
 
@@ -53,3 +58,5 @@ def custom_loss(recon, orig, epoch_frac):
     beta = epoch_frac
 
     return beta * mae_loss + (1 - beta) * mse_loss
+
+

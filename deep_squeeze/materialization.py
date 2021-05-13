@@ -45,6 +45,22 @@ def materialize_with_post_binning(model, x, device, error_thr):
     return codes.cpu().detach().numpy(), failures
 
 
+def materialize_moe(moe, x, device, error_thr):
+    x = torch.from_numpy(x).float().to(device)
+    x_moe = x.reshape(x.shape[0], 1, x.shape[1])
+
+    expert_codes, orig_shape, combine_tensor = moe.get_codes(x_moe)
+    recons = moe.get_recons_from_codes(expert_codes, orig_shape, combine_tensor)
+
+    # Perform post-binning too, to improve the final compression
+    post_binned = post_binning(recons, error_thr)
+
+    # Finding the failures between the table and the reconstructions
+    failures = x.cpu().numpy() - post_binned
+
+    return expert_codes.cpu().detach().numpy(), failures
+
+
 def post_binning(recons, error_thr):
     recons = recons.cpu().detach().numpy()
 
