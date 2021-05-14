@@ -36,6 +36,7 @@ def compression_pipeline(params):
     logging.info("Reading and preprocessing data...")
     raw_table = np.array(pd.read_csv(params['data_path'], header=None))
     quantized, scaler = ds_preprocessing(raw_table, params['error_threshold'], min_val=0, max_val=1)
+    params['features'] = quantized.shape[1]  # Need to store feature number for decompression
     logging.info("Done\n")
 
     # Create the model and send it to the GPU (if a GPU exists)
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         "epochs": 1,
         "batch_size": 64,
         "lr": 1e-4,
-        "error_threshold": 0.1,
+        "error_threshold": 0.005,
         "code_size": 1,
         "compression_path": f"storage/compressed/MSE_{today}/",
         "post_binning": True

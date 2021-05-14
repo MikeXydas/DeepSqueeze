@@ -1,12 +1,17 @@
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import joblib
 import torch
 import logging
 import json
 import shutil
 import os
+import zipfile
+import json
+
+from deep_squeeze.autoencoder import AutoEncoder
 
 
 def store_on_disk(path, model, codes, failures, scaler, hyper_params):
@@ -60,3 +65,51 @@ def calculate_compression_ratio(original_file_path, compressed_file_path):
     compress_size = os.path.getsize(compressed_file_path)
 
     return compress_size / orig_size, compress_size, orig_size
+
+
+def unzip_file(path):
+    temp_path = f"{path[:-4]}_temp"
+    # Extract the zip file to a temporary folder
+    with zipfile.ZipFile(path, 'r') as zip_ref:
+        zip_ref.extractall(temp_path)
+
+    with open(f'{temp_path}/hyper_params.json') as f:
+        hyper_params = json.load(f)
+
+    return hyper_params, temp_path
+
+
+def load_model(folder_path, model):
+    model.load_state_dict(torch.load(f"{folder_path}/model.pth"))
+    model.eval()
+
+    return model
+
+
+def load_codes_failures(folder_path):
+    codes = np.array(pd.read_parquet(f"{folder_path}/codes.parquet"))
+    failures = np.array(pd.read_parquet(f"{folder_path}/failures.parquet"))
+
+    return codes, failures
+
+
+def load_scaler(folder_path):
+    return joblib.load(f"{folder_path}/scaler.pkl")
+
+
+def load_files(comp_path):
+    # Unzip the file and load the hyper parameters
+    hyper_params, folder_path = unzip_file(comp_path)
+
+    # Initialize an autoencoder that we will load the parameters into
+    ae = AutoEncoder(hyper_params['features'], hyper_params['code_size'])
+
+    # Load model, codes, failures and scaler
+    ae = load_model(folder_path, ae)
+    codes, failures = load_codes_failures(folder_path)
+    scaler = load_scaler(folder_path)
+
+    # Since we have loaded everything we need, delete the temp folder
+    shutil.rmtree(folder_path + "/")
+
+    return ae, codes, failures, scaler

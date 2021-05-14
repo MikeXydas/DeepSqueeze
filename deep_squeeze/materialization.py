@@ -52,3 +52,12 @@ def post_binning(recons, error_thr):
     post_binned = (digitized - 1) * (2 * error_thr) + error_thr
 
     return post_binned
+
+
+def codes_to_table(model, codes, failures):
+    recons = model.decoder(codes).cpu().detach().numpy()
+    recons = recons + failures
+
+    return recons
+
+
