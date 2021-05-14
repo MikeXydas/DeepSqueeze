@@ -45,6 +45,18 @@ def materialize_with_post_binning(model, x, device, error_thr):
 
 
 def post_binning(recons, error_thr):
+    """
+    Instead of calculating the decoder(codes) - original immediately we perform the same binning (quantization) on
+    the reconstructions as we performed on the original data. This way we reduce the number of unique failure values
+    helping the parquet compression of the failures.
+
+    Args:
+        recons: The reconstructions we get by decoder(codes)
+        error_thr: The error threshold we used for the quantization on our original table
+
+    Returns:
+        The quantized reconstructions
+    """
     recons = recons.cpu().detach().numpy()
 
     bins = np.arange(0, 1, 2 * error_thr)
