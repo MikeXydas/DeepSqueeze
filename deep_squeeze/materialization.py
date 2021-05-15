@@ -66,6 +66,36 @@ def post_binning(recons, error_thr):
     return post_binned
 
 
+def materialize_with_bin_difference(model, x, device, error_thr):
+    # Get the tensor form of our table and send it to the device
+    x = torch.from_numpy(x).float().to(device)
+
+    # Find the compressed codes that we will store
+    codes = model.encoder(x)
+
+    # Decode these codes to find failures
+    recons = model.decoder(codes)
+
+    # Calculate the bins difference (distance) between the original table and the reconstruction
+    bin_diff = find_bin_difference(x.cpu().numpy(),
+                                   recons.cpu().detach().numpy(),
+                                   error_thr)
+
+    # In this variation of storing failures we just store the bin difference
+    failures = bin_diff.astype('uint8')
+
+    return codes.cpu().detach().numpy(), failures
+
+
+def find_bin_difference(x, recons, error_thr):
+    bins = np.arange(0, 1, 2 * error_thr)
+
+    x_digitized = np.digitize(x, bins)
+    recons_digitized = np.digitize(recons, bins)
+
+    return x_digitized - recons_digitized
+
+
 def codes_to_table(model, codes, failures):
     recons = model.decoder(codes).cpu().detach().numpy()
     recons = recons + failures

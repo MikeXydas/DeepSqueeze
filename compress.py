@@ -8,7 +8,8 @@ from datetime import datetime
 from deep_squeeze.autoencoder import AutoEncoder
 from deep_squeeze.preprocessing import ds_preprocessing
 from deep_squeeze.train_loop import train
-from deep_squeeze.materialization import materialize, materialize_with_post_binning
+from deep_squeeze.materialization import materialize, materialize_with_post_binning, \
+    materialize_with_bin_difference
 from deep_squeeze.disk_storing import store_on_disk, calculate_compression_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
@@ -55,10 +56,15 @@ def compression_pipeline(params):
     model.eval()
 
     # Materialization step
-    if params['post_binning']:
+    if params['binning_strategy'] == "POST_BINNING":
         codes, failures = materialize_with_post_binning(model, quantized, device, params['error_threshold'])
-    else:
+    elif params['binning_strategy'] == "BIN_DIFFERENCE":
+        codes, failures = materialize_with_bin_difference(model, quantized, device, params['error_threshold'])
+    elif params['binning_strategy'] == "NONE":
         codes, failures = materialize(model, quantized, device)
+    else:
+        raise ValueError("Available binning strategies: \"NONE\", "
+                         "\"POST_BINNING\", \"BIN_DIFFERENCE\"")
 
     # Store the final file on disk
     comp_path = store_on_disk(params['compression_path'], model, codes, failures, scaler, params)
@@ -66,6 +72,8 @@ def compression_pipeline(params):
     # Log the final compression ratio DeepSqueeze achieved
     comp_ratio, comp_size, orig_size = calculate_compression_ratio(params['data_path'], comp_path)
     logging.info(f"Compression ratio: {(comp_ratio*100):.2f}% ({comp_size*1e-6:.2f}MB / {orig_size*1e-6:.2f}MB)")
+
+    return comp_ratio
 
 
 if __name__ == '__main__':
@@ -81,7 +89,7 @@ if __name__ == '__main__':
         "error_threshold": 0.005,
         "code_size": 1,
         "compression_path": f"storage/compressed/MSE_{today}/",
-        "post_binning": True
+        "binning_strategy": "BIN_DIFFERENCE"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
     # Run the full pipeline
