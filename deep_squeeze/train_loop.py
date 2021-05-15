@@ -1,3 +1,5 @@
+import logging
+
 from tqdm import tqdm
 
 import torch
@@ -38,8 +40,8 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
             # Book-keeping
             epoch_loss += loss
 
-        print(f"> Epoch: {epoch + 1} / {epochs} | "
-              f"{type(criterion).__name__}: {float(epoch_loss / len(train_loader)):.3f}\n")
+        logging.debug(f"Epoch: {epoch + 1} / {epochs} | "
+                      f"{type(criterion).__name__}: {float(epoch_loss / len(train_loader)):.3f}\n")
 
     return model, epoch_loss / len(train_loader)
 

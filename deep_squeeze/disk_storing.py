@@ -12,7 +12,7 @@ import zipfile
 import json
 
 from deep_squeeze.autoencoder import AutoEncoder
-from numcompress import compress_ndarray, decompress_ndarray
+# from numcompress import compress_ndarray, decompress_ndarray
 
 
 def store_on_disk(path, model, codes, failures, scaler, hyper_params):
@@ -42,9 +42,6 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     failures_df = pd.DataFrame(failures, columns=None)
     failures_df.columns = failures_df.columns.astype(str)
     failures_df.to_parquet(path + "failures.parquet", index=False)
-    # compressed_failures = compress_ndarray(failures)
-    # with open(path + "failures.bin", "w") as file:
-    #     file.write(compressed_failures)
 
     # Store the scaler
     joblib.dump(scaler, path + 'scaler.pkl')
@@ -59,7 +56,7 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     # Delete the temporary folder
     shutil.rmtree(path)
 
-    logging.info(f"Stored files in {path[:-1]}.zip")
+    logging.debug(f"Stored files in {path[:-1]}.zip")
 
     return path[:-1] + '.zip'
 

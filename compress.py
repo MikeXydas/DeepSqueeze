@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import logging
+import time
 import torch
 
 from datetime import datetime
@@ -11,11 +12,12 @@ from deep_squeeze.train_loop import train
 from deep_squeeze.materialization import materialize, materialize_with_post_binning, \
     materialize_with_bin_difference
 from deep_squeeze.disk_storing import store_on_disk, calculate_compression_ratio
-from deep_squeeze.experiment import repeat_n_times,display_compression_results
+from deep_squeeze.experiment import repeat_n_times, display_compression_results
+from deep_squeeze.bayesian_optimizer import minimize_comp_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
-compression_repeats = 5
+compression_repeats = 2
 
 
 @repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
@@ -32,28 +34,30 @@ def compression_pipeline(params):
         params: A dictionary of hyper-parameters (check main below for an example)
 
     """
+    start_time = time.time()
+
     # Check if a CUDA enabled GPU exists
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    logging.info(f"Running with: {device}")
+    logging.debug(f"Running with: {device}")
 
     # Read and preprocess the data
-    logging.info("Reading and preprocessing data...")
+    logging.debug("Reading and preprocessing data...")
     raw_table = np.array(pd.read_csv(params['data_path'], header=None))
     quantized, scaler = ds_preprocessing(raw_table, params['error_threshold'], min_val=0, max_val=1)
     params['features'] = quantized.shape[1]  # Need to store feature number for decompression
-    logging.info("Done\n")
+    logging.debug("Done\n")
 
     # Create the model and send it to the GPU (if a GPU exists)
-    logging.info("Creating model...")
+    logging.debug("Creating model...")
     ae = AutoEncoder(quantized.shape[1], params['code_size'], params['width_multiplier'], params['ae_depth'])
     ae.to(device)
-    logging.info("Done\n")
+    logging.debug("Done\n")
 
     # Train the autoencoder
-    logging.info("Training...")
+    logging.debug("Training...")
     model, loss = train(ae, device, quantized, epochs=params['epochs'],
                         batch_size=params['batch_size'], lr=params['lr'])
-    logging.info(f"Training finished. Final loss: {float(loss):.3f}")
+    logging.debug(f"Training finished. Final loss: {float(loss):.3f}")
 
     # Set the model to eval mode
     model.eval()
@@ -72,9 +76,12 @@ def compression_pipeline(params):
     # Store the final file on disk
     comp_path = store_on_disk(params['compression_path'], model, codes, failures, scaler, params)
 
+    total_time = time.time() - start_time
+
     # Log the final compression ratio DeepSqueeze achieved
     comp_ratio, comp_size, orig_size = calculate_compression_ratio(params['data_path'], comp_path)
-    logging.info(f"Compression ratio: {(comp_ratio*100):.2f}% ({comp_size*1e-6:.2f}MB / {orig_size*1e-6:.2f}MB)")
+    logging.info(f"Compression ratio: {(comp_ratio*100):.2f}% ({comp_size*1e-6:.2f}MB / {orig_size*1e-6:.2f}MB) | "
+                 f"Time: {total_time:.2f}s")
 
     return comp_ratio
 
@@ -87,17 +94,18 @@ if __name__ == '__main__':
     params = {
         "data_path": "storage/datasets/corel_processed.csv",
         "epochs": 1,
-        "ae_depth": 2,  # Value in paper: 2
-        "width_multiplier": 2,  # Value in paper: 2
-        "batch_size": 64,
+        "ae_depth": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
+        "width_multiplier": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
+        "batch_size": 32,
         "lr": 1e-4,
         "error_threshold": 0.005,
-        "code_size": 1,
+        "code_size": [1, 3],  # Optimized through bayesian optimization
         "compression_path": f"storage/compressed/MSE_{today}/",
-        "binning_strategy": "BIN_DIFFERENCE"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
+        "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
     # Run the full pipeline (check if compression_pipeline is decorated)
-    mean_ratio, std_ratio = compression_pipeline(params)
-    display_compression_results(mean_ratio, std_ratio, compression_repeats)
+    best_params = minimize_comp_ratio(compression_pipeline, params)['params']
+    # mean_ratio, std_ratio = compression_pipeline(params)
+    # display_compression_results(mean_ratio, std_ratio, compression_repeats)
 
