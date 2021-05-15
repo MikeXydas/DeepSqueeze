@@ -11,11 +11,14 @@ from deep_squeeze.train_loop import train
 from deep_squeeze.materialization import materialize, materialize_with_post_binning, \
     materialize_with_bin_difference
 from deep_squeeze.disk_storing import store_on_disk, calculate_compression_ratio
+from deep_squeeze.experiment import repeat_n_times,display_compression_results
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
+compression_repeats = 5
 
 
+@repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
 def compression_pipeline(params):
     """
     The full compression pipeline performing the following steps:
@@ -42,7 +45,7 @@ def compression_pipeline(params):
 
     # Create the model and send it to the GPU (if a GPU exists)
     logging.info("Creating model...")
-    ae = AutoEncoder(quantized.shape[1], params['code_size'])
+    ae = AutoEncoder(quantized.shape[1], params['code_size'], params['width_multiplier'], params['ae_depth'])
     ae.to(device)
     logging.info("Done\n")
 
@@ -84,6 +87,8 @@ if __name__ == '__main__':
     params = {
         "data_path": "storage/datasets/corel_processed.csv",
         "epochs": 1,
+        "ae_depth": 2,  # Value in paper: 2
+        "width_multiplier": 2,  # Value in paper: 2
         "batch_size": 64,
         "lr": 1e-4,
         "error_threshold": 0.005,
@@ -92,6 +97,7 @@ if __name__ == '__main__':
         "binning_strategy": "BIN_DIFFERENCE"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
-    # Run the full pipeline
-    compression_pipeline(params)
+    # Run the full pipeline (check if compression_pipeline is decorated)
+    mean_ratio, std_ratio = compression_pipeline(params)
+    display_compression_results(mean_ratio, std_ratio, compression_repeats)
 
