@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import logging
 
 
 def repeat_n_times(n):
@@ -22,3 +24,24 @@ def display_compression_results(mean_ratio, std_ratio, repeats):
     print(f"\n>>> Final results after {repeats} executions:")
     print(f"\tMean compression ratio: {mean_ratio:.3f}")
     print(f"\tStd of compression ratio: {std_ratio:.3f}")
+
+
+def run_full_experiments(pipeline_func, dataset_paths, errors, params, save_path):
+    results_df = pd.DataFrame(columns=['Data', 'Error', 'MeanRatio', 'StdRatio'])
+
+    for dataset in dataset_paths:
+        params['data_path'] = dataset
+        dataset_name = dataset.split('/')[-1]
+        for error in errors:
+            params['error_threshold'] = error
+
+            mean_ratio, std_ratio = pipeline_func(params)
+
+            results_df = results_df.append({'Data': dataset_name,
+                                            'Error': error,
+                                            'MeanRatio': mean_ratio,
+                                            'StdRatio': std_ratio},
+                                           ignore_index=True)
+            logging.info(f">>> Completed {dataset_name} with {error} error threshold.")
+
+    results_df.to_csv(save_path)

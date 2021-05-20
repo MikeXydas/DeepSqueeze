@@ -35,6 +35,7 @@ class AutoEncoder(nn.Module):
             dec_layers.append(nn.Linear(in_features=hidden_layer_width, out_features=hidden_layer_width))
             dec_layers.append(self.activation())
         dec_layers.append(self.dec_fc_recon)
+        dec_layers.append(self.activation())
 
         self.decoder = nn.Sequential(*dec_layers)
 

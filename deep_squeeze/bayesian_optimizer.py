@@ -6,7 +6,6 @@ def minimize_comp_ratio(func, params):
     const_params = {
         "data_path": params["data_path"],
         "epochs": params["epochs"],
-        "batch_size": params["batch_size"],
         "lr": params["lr"],
         "error_threshold": params["error_threshold"],
         "compression_path": params["compression_path"],
@@ -17,16 +16,18 @@ def minimize_comp_ratio(func, params):
     optimized_params = {
         "ae_depth": params["ae_depth"],
         "width_multiplier": params["width_multiplier"],
-        "code_size": params["code_size"]
+        "code_size": params["code_size"],
+        "batch_size": params["batch_size"]
     }
 
-    def param_wrapper(ae_depth, width_multiplier, code_size):
+    def param_wrapper(ae_depth, width_multiplier, code_size, batch_size):
         # Through picked_params we also perform discretization if needed
         # and any other transformations
         picked_params = {
             "ae_depth": int(ae_depth),
             "width_multiplier": int(width_multiplier),
-            "code_size": int(code_size)
+            "code_size": int(code_size),
+            "batch_size": 2**int(batch_size)
         }
 
         # Union both the constant and the optimized parameters and pass them on our
@@ -43,14 +44,14 @@ def minimize_comp_ratio(func, params):
 
     # Guide the optimizer by suggesting values that are empirically correct as initial point
     optimizer.probe(
-        params={"ae_depth": 2, "width_multiplier": 2, "code_size": 1},
+        params={"ae_depth": 2, "width_multiplier": 2, "code_size": 1, "batch_size": 5},
         lazy=True,
     )
 
     # Start the maximization of -1 * compression_ratio
     optimizer.maximize(
         init_points=2,
-        n_iter=3,
+        n_iter=20,
     )
 
     return optimizer.max

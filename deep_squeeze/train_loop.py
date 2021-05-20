@@ -19,7 +19,7 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
 
     for epoch in range(epochs):
         epoch_loss = 0
-        for original_rows in tqdm(train_loader):
+        for batch_ind, original_rows in enumerate(tqdm(train_loader)):
             # Get the batch data and put them to device
             original_rows = original_rows.float().to(device)
 
@@ -28,7 +28,7 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
 
             # Calculate loss
             loss = criterion(recon_rows, original_rows)
-            # loss = custom_loss(recon_rows, original_rows, epoch / epochs)
+            # loss = step_mse_to_mae(recon_rows, original_rows, epoch / epochs, 0.1)
 
             # Calculate the gradients
             loss.backward()
@@ -46,7 +46,8 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
     return model, epoch_loss / len(train_loader)
 
 
-def custom_loss(recon, orig, epoch_frac):
+# Below we define some custom losses that replace the default MSE loss of the paper
+def linear_mse_to_mae(recon, orig, epoch_frac):
     mse_loss = torch.mean((recon - orig) ** 2)
     mae_loss = torch.mean(torch.abs(recon - orig))
 
@@ -55,3 +56,10 @@ def custom_loss(recon, orig, epoch_frac):
     beta = epoch_frac
 
     return beta * mae_loss + (1 - beta) * mse_loss
+
+
+def step_mse_to_mae(recon, orig, epoch_frac, mae_coef):
+    if epoch_frac < 0.5:
+        return torch.mean((recon - orig) ** 2)
+    else:
+        return mae_coef * torch.mean(torch.abs(recon - orig))

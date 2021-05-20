@@ -12,12 +12,12 @@ from deep_squeeze.train_loop import train
 from deep_squeeze.materialization import materialize, materialize_with_post_binning, \
     materialize_with_bin_difference
 from deep_squeeze.disk_storing import store_on_disk, calculate_compression_ratio
-from deep_squeeze.experiment import repeat_n_times, display_compression_results
+from deep_squeeze.experiment import repeat_n_times, display_compression_results, run_full_experiments
 from deep_squeeze.bayesian_optimizer import minimize_comp_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
-compression_repeats = 2
+compression_repeats = 5
 
 
 @repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
@@ -90,22 +90,46 @@ if __name__ == '__main__':
     # Getting starting date and time for logging
     today = datetime.now().strftime("%d_%m_%Y__%HH_%MM_%SS")
 
-    # Set experiment parameters
+    # Bayesian optimization parameters
+    # params = {
+    #     "data_path": "storage/datasets/corel_processed.csv",
+    #     "epochs": 1,
+    #     "ae_depth": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
+    #     "width_multiplier": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
+    #     "batch_size": [3, 9],  # The exponent of 2
+    #     "lr": 1e-4,
+    #     "error_threshold": 0.005,
+    #     "code_size": [1, 3],  # Optimized through bayesian optimization
+    #     "compression_path": f"storage/compressed/MSE_{today}/",
+    #     "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
+    # }
+
+    # Hardcoded parameters
     params = {
-        "data_path": "storage/datasets/corel_processed.csv",
+        "data_path": "storage/datasets/berkeley_processed.csv",
         "epochs": 1,
-        "ae_depth": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
-        "width_multiplier": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
-        "batch_size": 32,
+        "ae_depth": 2,  # Value in paper: 2, Optimized through bayesian optimization
+        "width_multiplier": 2,  # Value in paper: 2, Optimized through bayesian optimization
+        "batch_size": 64,
         "lr": 1e-4,
         "error_threshold": 0.005,
-        "code_size": [1, 3],  # Optimized through bayesian optimization
+        "code_size": 1,
         "compression_path": f"storage/compressed/MSE_{today}/",
         "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
-    # Run the full pipeline (check if compression_pipeline is decorated)
-    best_params = minimize_comp_ratio(compression_pipeline, params)['params']
+    # Bayesian optimization run
+    # best_params = minimize_comp_ratio(compression_pipeline, params)['params']
+    # print(best_params)
+
+    # Hardcoded parameters run
     # mean_ratio, std_ratio = compression_pipeline(params)
     # display_compression_results(mean_ratio, std_ratio, compression_repeats)
 
+    # Full experiments run (on specified datasets and error thresholds)
+    datasets = ["storage/datasets/corel_processed.csv",
+                "storage/datasets/berkeley_processed.csv",
+                "storage/datasets/monitor_processed_0_1_fraction.csv"]
+    errors = [0.005, 0.01, 0.05, 0.1]
+    run_full_experiments(compression_pipeline, datasets, errors, params,
+                         "storage/results/res_MSE_post_bin_d_2_w_2_b_64_cs_1_e_1.csv")
