@@ -2,13 +2,6 @@ import torch
 import numpy as np
 
 
-def find_failures(x, recons):
-    x = x.cpu().numpy()
-    recons = recons.cpu().detach().numpy()
-
-    return x - recons
-
-
 def materialize(model, x, device):
     # Get the tensor form of our table and send it to the device
     x = torch.from_numpy(x).float().to(device)
@@ -20,7 +13,7 @@ def materialize(model, x, device):
     recons = model.decoder(codes)
 
     # Finding the failures between the table and the reconstructions
-    failures = find_failures(x, recons)
+    failures = calculate_failures(x, recons)
 
     return codes.cpu().detach().numpy(), failures
 
@@ -87,6 +80,13 @@ def materialize_with_bin_difference(model, x, device, error_thr):
     return codes.cpu().detach().numpy(), failures
 
 
+def calculate_failures(x, recons):
+    x = x.cpu().numpy()
+    recons = recons.cpu().detach().numpy()
+
+    return x - recons
+
+
 def find_bin_difference(x, recons, error_thr):
     bins = np.arange(0, 1, 2 * error_thr)
 
@@ -101,5 +101,3 @@ def codes_to_table(model, codes, failures):
     recons = recons + failures
 
     return recons
-
-

@@ -17,7 +17,7 @@ from deep_squeeze.bayesian_optimizer import minimize_comp_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
-compression_repeats = 5
+compression_repeats = 10
 
 
 @repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         "error_threshold": 0.005,
         "code_size": 1,
         "compression_path": f"storage/compressed/MSE_{today}/",
-        "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
+        "binning_strategy": "NONE"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
     # Bayesian optimization run
@@ -134,4 +134,5 @@ if __name__ == '__main__':
                 ]
     errors = [0.005, 0.01, 0.05, 0.1]
     run_full_experiments(compression_pipeline, datasets, errors, params,
-                         "storage/results/res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv", repeats=compression_repeats)
+                         "storage/results/NO_POST_BINNING_NO_SCHED_res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv",
+                         repeats=compression_repeats)
