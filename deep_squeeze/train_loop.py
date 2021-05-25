@@ -16,7 +16,6 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
     criterion = nn.MSELoss()
     # criterion = nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
-
     for epoch in range(epochs):
         epoch_loss = 0
         for batch_ind, original_rows in enumerate(tqdm(train_loader)):

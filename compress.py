@@ -56,7 +56,7 @@ def compression_pipeline(params):
     # Train the autoencoder
     logging.debug("Training...")
     model, loss = train(ae, device, quantized, epochs=params['epochs'],
-                        batch_size=params['batch_size'], lr=params['lr'])
+                        batch_size=quantized.shape[0] // 1_000, lr=params['lr'])
     logging.debug(f"Training finished. Final loss: {float(loss):.3f}")
 
     # Set the model to eval mode
@@ -127,9 +127,11 @@ if __name__ == '__main__':
     # display_compression_results(mean_ratio, std_ratio, compression_repeats)
 
     # Full experiments run (on specified datasets and error thresholds)
-    datasets = ["storage/datasets/corel_processed.csv",
+    datasets = [
+                "storage/datasets/corel_processed.csv",
                 "storage/datasets/berkeley_processed.csv",
-                "storage/datasets/monitor_processed_0_1_fraction.csv"]
+                "storage/datasets/monitor_processed_0_2_fraction.csv"
+                ]
     errors = [0.005, 0.01, 0.05, 0.1]
     run_full_experiments(compression_pipeline, datasets, errors, params,
-                         "storage/results/res_MSE_post_bin_d_2_w_2_b_64_cs_1_e_1.csv")
+                         "storage/results/res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv", repeats=compression_repeats)

@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pandas as pd
 import logging
@@ -26,13 +28,14 @@ def display_compression_results(mean_ratio, std_ratio, repeats):
     print(f"\tStd of compression ratio: {std_ratio:.3f}")
 
 
-def run_full_experiments(pipeline_func, dataset_paths, errors, params, save_path):
-    results_df = pd.DataFrame(columns=['Data', 'Error', 'MeanRatio', 'StdRatio'])
+def run_full_experiments(pipeline_func, dataset_paths, errors, params, save_path, repeats=1):
+    results_df = pd.DataFrame(columns=['Data', 'Error', 'MeanRatio', 'StdRatio', 'Time'])
 
     for dataset in dataset_paths:
         params['data_path'] = dataset
         dataset_name = dataset.split('/')[-1]
         for error in errors:
+            start_time = time.time()
             params['error_threshold'] = error
 
             mean_ratio, std_ratio = pipeline_func(params)
@@ -40,7 +43,8 @@ def run_full_experiments(pipeline_func, dataset_paths, errors, params, save_path
             results_df = results_df.append({'Data': dataset_name,
                                             'Error': error,
                                             'MeanRatio': mean_ratio,
-                                            'StdRatio': std_ratio},
+                                            'StdRatio': std_ratio,
+                                            'Time': np.round((time.time() - start_time)/repeats, 2)},
                                            ignore_index=True)
             logging.info(f">>> Completed {dataset_name} with {error} error threshold.")
 
