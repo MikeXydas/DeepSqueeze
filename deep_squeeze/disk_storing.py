@@ -12,7 +12,6 @@ import zipfile
 import json
 
 from deep_squeeze.autoencoder import AutoEncoder
-# from numcompress import compress_ndarray, decompress_ndarray
 
 
 def store_on_disk(path, model, codes, failures, scaler, hyper_params):
