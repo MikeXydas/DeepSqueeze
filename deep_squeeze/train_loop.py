@@ -26,8 +26,8 @@ def train(model, device, quantized_data, epochs=30, batch_size=64, lr=1e-4):
             recon_rows = model(original_rows)
 
             # Calculate loss
-            loss = criterion(recon_rows, original_rows)
-            # loss = step_mse_to_mae(recon_rows, original_rows, epoch / epochs, 0.1)
+            # loss = criterion(recon_rows, original_rows)
+            loss = step_mse_to_mae(recon_rows, original_rows, epoch / epochs, 0.1)
 
             # Calculate the gradients
             loss.backward()

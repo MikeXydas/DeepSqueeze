@@ -87,7 +87,7 @@ def run_scaling_experiment(sample_sizes, pipeline_func, dataset_path, params, sa
 
         # Parquet time
         start_time = time.time()
-        sample_df.to_parquet("storage/temporary_time_exp/parquet_temp.parquet", index=False)
+        sample_df.to_parquet("storage/temporary_time_exp/parquet_temp.parquet", index=False, compression='brotli')
         parquet_time = np.round((time.time() - start_time), 2)
 
         results_df = results_df.append({'SampleSize': sample_size,
@@ -115,7 +115,8 @@ def baseline_compression_ratios(datasets, results_path):
         gzip_comp_ratio, _, _ = calculate_compression_ratio(dataset_path,
                                                             "storage/temporary_baseline/gzip_temp.csv.zip")
 
-        pd.read_csv(dataset_path).to_parquet("storage/temporary_baseline/parquet_temp.parquet", index=False)
+        pd.read_csv(dataset_path).to_parquet("storage/temporary_baseline/parquet_temp.parquet", index=False,
+                                             compression='brotli')
         parquet_comp_ratio, _, _ = calculate_compression_ratio(dataset_path,
                                                                "storage/temporary_baseline/parquet_temp.parquet")
 

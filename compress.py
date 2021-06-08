@@ -18,7 +18,7 @@ from deep_squeeze.bayesian_optimizer import minimize_comp_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
-compression_repeats = 3
+compression_repeats = 10
 
 
 @repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
@@ -62,7 +62,7 @@ def compression_pipeline(params):
     # Train the autoencoder
     logging.debug("Training...")
     model, loss = train(ae, device, sample_data, epochs=params['epochs'],
-                        batch_size=sample_data.shape[0] // 1_000, lr=params['lr'])
+                        batch_size=sample_data.shape[0] // 1_500, lr=params['lr'])
     logging.debug(f"Training finished. Final loss: {float(loss):.3f}")
 
     # Set the model to eval mode
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     #     "width_multiplier": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
     #     "batch_size": [3, 9],  # The exponent of 2
     #     "lr": 1e-4,
-    #     "error_threshold": 0.005,
+    #     "error_threshold": 0.1,
     #     "code_size": [1, 3],  # Optimized through bayesian optimization
     #     "compression_path": f"storage/compressed/MSE_{today}/",
     #     "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
@@ -112,46 +112,46 @@ if __name__ == '__main__':
 
     # Hardcoded parameters
     params = {
-        "data_path": "storage/datasets/berkeley_processed.csv",
-        "epochs": 1,
+        "data_path": "storage/datasets/corel_processed.csv",
+        "epochs": 2,
         "ae_depth": 2,  # Value in paper: 2, Optimized through bayesian optimization
         "width_multiplier": 2,  # Value in paper: 2, Optimized through bayesian optimization
         "batch_size": 64,
         "lr": 1e-4,
-        "error_threshold": 0.01,
+        "error_threshold": 0.1,
         "code_size": 1,
         "compression_path": f"storage/compressed/MSE_{today}/",
-        "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
+        "binning_strategy": "NONE"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
     }
 
-    # Bayesian optimization run
+    # __________ Bayesian optimization run __________
     # best_params = minimize_comp_ratio(compression_pipeline, params)['params']
     # print(best_params)
 
-    # Hardcoded parameters run
+    # __________ Hardcoded parameters run __________
     # mean_ratio, std_ratio = compression_pipeline(params)
     # display_compression_results(mean_ratio, std_ratio, compression_repeats)
 
-    # Full experiments run (on specified datasets and error thresholds)
-    # datasets = [
-    #             "storage/datasets/corel_processed.csv",
-    #             "storage/datasets/berkeley_processed.csv",
-    #             "storage/datasets/monitor_processed_0_2_fraction.csv"
-    #             ]
-    # errors = [0.005, 0.01, 0.05, 0.1]
-    # run_full_experiments(compression_pipeline, datasets, errors, params,
-    #                      "storage/results/TEST_WITH_POST_BINNING_WITH_STEP_SCHED_res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv",
-    #                      repeats=compression_repeats)
-
-    # Time scaling experiments
-    # sample_sizes = np.arange(0.2, 1.2, 0.2)
-    # run_scaling_experiment(sample_sizes, compression_pipeline, "storage/datasets/monitor_processed_0_2_fraction.csv",
-    #                        params, 'storage/results/TIME_SCALING_EXPERIMENTS.csv', repeats=compression_repeats)
-
-    # Baseline compression ratio experiments
+    # __________ Full experiments run (on specified datasets and error thresholds) __________
     datasets = [
                 "storage/datasets/corel_processed.csv",
                 "storage/datasets/berkeley_processed.csv",
                 "storage/datasets/monitor_processed_0_2_fraction.csv"
                 ]
-    baseline_compression_ratios(datasets, 'storage/results/BASELINE_COMPRESSION_RATIO.csv')
+    errors = [0.005, 0.01, 0.05, 0.1]
+    run_full_experiments(compression_pipeline, datasets, errors, params,
+                         "storage/results/NO_POST_BINNING_WITH_STEP_SCHED_res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv",
+                         repeats=compression_repeats)
+
+    # __________ Time scaling experiments __________
+    # sample_sizes = np.arange(0.2, 1.2, 0.2)
+    # run_scaling_experiment(sample_sizes, compression_pipeline, "storage/datasets/monitor_processed_0_2_fraction.csv",
+    #                        params, 'storage/results/TIME_SCALING_EXPERIMENTS.csv', repeats=compression_repeats)
+
+    # __________ Baseline compression ratio experiments __________
+    # datasets = [
+    #             "storage/datasets/corel_processed.csv",
+    #             "storage/datasets/berkeley_processed.csv",
+    #             "storage/datasets/monitor_processed_0_2_fraction.csv"
+    #             ]
+    # baseline_compression_ratios(datasets, 'storage/results/BASELINE_COMPRESSION_RATIO.csv')

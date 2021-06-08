@@ -35,12 +35,12 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     # Store the codes in a parquet file
     codes_df = pd.DataFrame(codes, columns=None)
     codes_df.columns = codes_df.columns.astype(str)
-    codes_df.to_parquet(path + "codes.parquet", index=False)
+    codes_df.to_parquet(path + "codes.parquet", index=False, compression='brotli')
 
     # Store the failures in a parquet file
     failures_df = pd.DataFrame(failures, columns=None)
     failures_df.columns = failures_df.columns.astype(str)
-    failures_df.to_parquet(path + "failures.parquet", index=False)
+    failures_df.to_parquet(path + "failures.parquet", index=False, compression='brotli')
 
     # Store the scaler
     joblib.dump(scaler, path + 'scaler.pkl')
