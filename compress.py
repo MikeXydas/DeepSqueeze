@@ -3,6 +3,7 @@ import pandas as pd
 import logging
 import time
 import torch
+import argparse
 
 from datetime import datetime
 
@@ -18,7 +19,7 @@ from deep_squeeze.bayesian_optimizer import minimize_comp_ratio
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
-compression_repeats = 10
+compression_repeats = 3
 
 
 @repeat_n_times(n=compression_repeats)  # To produce a consistent result we repeat the experiment n times
@@ -62,7 +63,7 @@ def compression_pipeline(params):
     # Train the autoencoder
     logging.debug("Training...")
     model, loss = train(ae, device, sample_data, epochs=params['epochs'],
-                        batch_size=sample_data.shape[0] // 1500, lr=params['lr'])
+                        batch_size=sample_data.shape[0] // params['batch_size'], lr=params['lr'])
     logging.debug(f"Training finished. Final loss: {float(loss):.3f}")
 
     # Set the model to eval mode
@@ -93,65 +94,40 @@ def compression_pipeline(params):
 
 
 if __name__ == '__main__':
-    # Getting starting date and time for logging
-    today = datetime.now().strftime("%d_%m_%Y__%HH_%MM_%SS")
-
-    # Bayesian optimization parameters
-    # params = {
-    #     "data_path": "storage/datasets/corel_processed.csv",
-    #     "epochs": 1,
-    #     "ae_depth": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
-    #     "width_multiplier": [1, 4],  # Value in paper: 2, Optimized through bayesian optimization
-    #     "batch_size": [3, 9],  # The exponent of 2
-    #     "lr": 1e-4,
-    #     "error_threshold": 0.1,
-    #     "code_size": [1, 3],  # Optimized through bayesian optimization
-    #     "compression_path": f"storage/compressed/MSE_{today}/",
-    #     "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE"
-    # }
-
-    # Hardcoded parameters
     params = {
-        "data_path": "storage/datasets/corel_processed.csv",
+        # "data_path": "storage/datasets/corel_processed.csv",
         "epochs": 1,
         "ae_depth": 2,  # Value in paper: 2, Optimized through bayesian optimization
         "width_multiplier": 2,  # Value in paper: 2, Optimized through bayesian optimization
-        "batch_size": 64,
+        "batch_size": [1_000, 2_000],
         "lr": 1e-4,
-        "error_threshold": 0.1,
-        "code_size": 1,
-        "compression_path": f"storage/compressed/MSE_{today}/",
-        "binning_strategy": "POST_BINNING"  # "NONE", "BIN_DIFFERENCE", "BIN_DIFFERENCE"
+        # "error_threshold": 0.1,
+        "code_size": [1, 3],  # Optimized through bayesian optimization
+        # "compression_path": f"storage/compressed/MSE_{today}/",
+        "binning_strategy": "POST_BINNING"  # "NONE", "POST_BINNING", "BIN_DIFFERENCE",
     }
 
+    # Parse the input arguments, of input file, output file and error threshold
+    parser = argparse.ArgumentParser(description='Give the input, output and error threshold.')
+    parser.add_argument('-i', '--input', type=str, help='path to input table', required=True)
+    parser.add_argument('-o', '--output', type=str, help='path to compressed file', required=True)
+    parser.add_argument('-e', '--error', type=float, help='Percentage [0, 100] of error allowed', required=True)
+
+    args = parser.parse_args()
+    params['data_path'] = args.input
+    params['compression_path'] = args.output
+    params['error_threshold'] = args.error
+
+    # Getting starting date and time for logging
+    today = datetime.now().strftime("%d_%m_%Y__%HH_%MM_%SS")
+
     # __________ Bayesian optimization run __________
-    # best_params = minimize_comp_ratio(compression_pipeline, params)['params']
-    # print(best_params)
+    bo_params = params.copy()
+    bo_params['compression_path'] = 'temp/'
+    best_params = minimize_comp_ratio(compression_pipeline, bo_params)['params']
+    print(best_params)
 
     # __________ Hardcoded parameters run __________
+    compression_repeats = 1
     # mean_ratio, std_ratio = compression_pipeline(params)
     # display_compression_results(mean_ratio, std_ratio, compression_repeats)
-
-    # __________ Full experiments run (on specified datasets and error thresholds) __________
-    # datasets = [
-    #             "storage/datasets/corel_processed.csv",
-    #             "storage/datasets/berkeley_processed.csv",
-    #             "storage/datasets/monitor_processed_0_2_fraction.csv"
-    #             ]
-    # errors = [0.005, 0.01, 0.05, 0.1]
-    # run_full_experiments(compression_pipeline, datasets, errors, params,
-    #                      "storage/results/WITH_POST_BINNING_NO_SCHED_res_MSE_post_bin_d_2_w_2_b_VAR_cs_1_e_1.csv",
-    #                      repeats=compression_repeats)
-
-    # __________ Time scaling experiments __________
-    sample_sizes = np.arange(0.2, 1.2, 0.2)
-    run_scaling_experiment(sample_sizes, compression_pipeline, "storage/datasets/monitor_processed_0_2_fraction.csv",
-                           params, 'storage/results/TIME_SCALING_EXPERIMENTS.csv', repeats=compression_repeats)
-
-    # __________ Baseline compression ratio experiments __________
-    # datasets = [
-    #             "storage/datasets/corel_processed.csv",
-    #             "storage/datasets/berkeley_processed.csv",
-    #             "storage/datasets/monitor_processed_0_2_fraction.csv"
-    #             ]
-    # baseline_compression_ratios(datasets, 'storage/results/BASELINE_COMPRESSION_RATIO.csv')

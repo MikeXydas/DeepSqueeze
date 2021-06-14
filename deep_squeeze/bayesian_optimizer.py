@@ -9,25 +9,23 @@ def minimize_comp_ratio(func, params):
         "lr": params["lr"],
         "error_threshold": params["error_threshold"],
         "compression_path": params["compression_path"],
-        "binning_strategy": params["binning_strategy"]
+        "binning_strategy": params["binning_strategy"],
+        "ae_depth": params["ae_depth"],
+        "width_multiplier": params["width_multiplier"]
     }
 
     # The func parameters we optimize
     optimized_params = {
-        "ae_depth": params["ae_depth"],
-        "width_multiplier": params["width_multiplier"],
         "code_size": params["code_size"],
         "batch_size": params["batch_size"]
     }
 
-    def param_wrapper(ae_depth, width_multiplier, code_size, batch_size):
+    def param_wrapper(code_size, batch_size):
         # Through picked_params we also perform discretization if needed
         # and any other transformations
         picked_params = {
-            "ae_depth": int(ae_depth),
-            "width_multiplier": int(width_multiplier),
             "code_size": int(code_size),
-            "batch_size": 2**int(batch_size)
+            "batch_size": int(batch_size)
         }
 
         # Union both the constant and the optimized parameters and pass them on our
@@ -44,7 +42,7 @@ def minimize_comp_ratio(func, params):
 
     # Guide the optimizer by suggesting values that are empirically correct as initial point
     optimizer.probe(
-        params={"ae_depth": 2, "width_multiplier": 2, "code_size": 1, "batch_size": 5},
+        params={"code_size": 1, "batch_size": 1_500},
         lazy=True,
     )
 
