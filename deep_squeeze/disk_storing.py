@@ -102,7 +102,8 @@ def load_files(comp_path):
     hyper_params, folder_path = unzip_file(comp_path)
 
     # Initialize an autoencoder that we will load the parameters into
-    ae = AutoEncoder(hyper_params['features'], hyper_params['code_size'])
+    ae = AutoEncoder(hyper_params['features'], hyper_params['code_size'],
+                     hyper_params['width_multiplier'], hyper_params['ae_depth'])
 
     # Load model, codes, failures and scaler
     ae = load_model(folder_path, ae)

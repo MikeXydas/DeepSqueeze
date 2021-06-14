@@ -15,7 +15,7 @@ class AutoEncoder(nn.Module):
 
         # Encoder
         self.enc_inp_layer = nn.Linear(in_features=features_numb, out_features=hidden_layer_width)
-        self.enc_fc_layer_code = nn.Linear(in_features=hidden_layer_width, out_features=code_size)
+        self.enc_fc_layer_code = nn.Linear(in_features=hidden_layer_width, out_features=int(code_size))
 
         enc_layers = [self.enc_inp_layer, self.activation()]
         for _ in range(length - 1):
@@ -27,7 +27,7 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(*enc_layers)
 
         # Decoder
-        self.dec_fc_layer1 = nn.Linear(in_features=code_size, out_features=hidden_layer_width)
+        self.dec_fc_layer1 = nn.Linear(in_features=int(code_size), out_features=hidden_layer_width)
         self.dec_fc_recon = nn.Linear(in_features=hidden_layer_width, out_features=features_numb)
 
         dec_layers = [self.dec_fc_layer1, self.activation()]

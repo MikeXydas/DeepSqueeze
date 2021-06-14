@@ -11,7 +11,8 @@ def minimize_comp_ratio(func, params):
         "compression_path": params["compression_path"],
         "binning_strategy": params["binning_strategy"],
         "ae_depth": params["ae_depth"],
-        "width_multiplier": params["width_multiplier"]
+        "width_multiplier": params["width_multiplier"],
+        "sample_max_size": params["sample_max_size"]
     }
 
     # The func parameters we optimize
@@ -48,8 +49,8 @@ def minimize_comp_ratio(func, params):
 
     # Start the maximization of -1 * compression_ratio
     optimizer.maximize(
-        init_points=2,
-        n_iter=20,
+        init_points=1,
+        n_iter=1,
     )
 
     return optimizer.max

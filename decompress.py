@@ -1,9 +1,7 @@
-import numpy as np
+import argparse
 import pandas as pd
 import logging
 import torch
-
-from datetime import datetime
 
 from deep_squeeze.disk_storing import load_files
 from deep_squeeze.materialization import codes_to_table
@@ -13,9 +11,14 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s | %(asctime)s | %(
 
 
 if __name__ == '__main__':
-    outfile = "storage/compressed/corel_comp.zip"
+    # Parse the input arguments, of input file, output file and error threshold
+    parser = argparse.ArgumentParser(description='Give as input the compressed file.')
+    parser.add_argument('-i', '--input', type=str, help='path to input compressed file', required=True)
 
-    model, codes, failures, scaler = load_files(outfile)
+    args = parser.parse_args()
+    comp_file = args.input
+
+    model, codes, failures, scaler = load_files(comp_file)
 
     # If a CUDA enabled GPU exists, send both the codes and the model
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -34,7 +37,7 @@ if __name__ == '__main__':
     print("Done")
 
     # Store the final decompressed array as a csv on disk
-    print(f">>> Storing table on {outfile[:-4]}.csv...", end='')
+    print(f">>> Storing table on {comp_file[:-4]}.csv...", end='')
     table_df = pd.DataFrame(rescaled_arr)
-    table_df.to_csv(f"{outfile[:-4]}.csv", index=False)
+    table_df.to_csv(f"{comp_file[:-4]}.csv", index=False)
     print("Done")
