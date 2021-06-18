@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 from deep_squeeze.disk_storing import calculate_compression_ratio
 
+
 def repeat_n_times(n):
     """
     A decorator that repeats a decorated function (in our case the compression pipeline) n times and returns

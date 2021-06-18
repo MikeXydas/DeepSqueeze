@@ -124,7 +124,7 @@ if __name__ == '__main__':
     today = datetime.now().strftime("%d_%m_%Y__%HH_%MM_%SS")
 
     # __________ Bayesian optimization run __________
-    logging.info("Starting Bayesian Optimization fine-tuning code size and batch size\n")
+    logging.info("Starting Bayesian Optimization, fine-tuning code size and batch size\n")
     best_params = minimize_comp_ratio(compression_pipeline, params)['params']
 
     # __________ Best parameters run __________

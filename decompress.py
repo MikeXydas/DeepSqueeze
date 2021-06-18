@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import logging
 import torch
+import numpy as np
 
 from deep_squeeze.disk_storing import load_files
 from deep_squeeze.materialization import codes_to_table
@@ -38,6 +39,6 @@ if __name__ == '__main__':
 
     # Store the final decompressed array as a csv on disk
     print(f">>> Storing table on {comp_file[:-4]}.csv...", end='')
-    table_df = pd.DataFrame(rescaled_arr)
-    table_df.to_csv(f"{comp_file[:-4]}.csv", index=False)
+    table_df = pd.DataFrame(np.round(rescaled_arr, 3))
+    table_df.to_csv(f"{comp_file[:-4]}.csv", index=False, header=False)
     print("Done")
