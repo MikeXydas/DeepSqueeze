@@ -24,8 +24,9 @@ Tabular Data](https://cs.brown.edu/people/acrotty/pubs/3318464.3389734.pdf)* by 
  3. Download one of the processed tables (no header, only numerical values).
     * [Corel dataset](https://drive.google.com/file/d/1qz8qI56SDfJp-JuG750aYuYyAddi63_7/view?usp=sharing)
     * [Intel Berkeley Research Lab Sensor Data](https://drive.google.com/file/d/1JRDxmHpxT_2IpvWugBxmXKEev7xRmo2E/view?usp=sharing)
-    * Monitor dataset, due to to size I have not uploaded its preprocessed version.
-    You can download it here and preprocess it using `notebooks/preprocessing.ipynb`
+    * Monitor dataset, due to its size I have not uploaded the preprocessed version.
+    You can download it [here](http://cs.brown.edu/people/acrotty/mgbench/bench1.tar.gz) and preprocess 
+    it using `notebooks/preprocessing.ipynb`
  4. Compress the table with the command: 
  
  `python compress.py -i path/to/input/ -o path/to/output/ -e <error_threshold_percentage>`
