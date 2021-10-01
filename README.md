@@ -4,6 +4,12 @@ In this repo I attempt to reproduce the compression utility described in *[DeepS
 Tabular Data](https://cs.brown.edu/people/acrotty/pubs/3318464.3389734.pdf)* by *Amir Ilkhechi, Andrew Crotty,
  Alex Galakatos, Yicong Mao, Grace Fan, Xiran Shi, Ugur Cetintemel* from Brown University.
  
+ ## Demo (with sound :sound:)
+ 
+
+https://user-images.githubusercontent.com/35707606/135630347-6c878951-d9dc-405c-accb-edeb7673a6b0.mp4
+
+
  You can read the `report.pdf` for info about the original paper, my implementation, my additions and
  results.
  
@@ -14,6 +20,7 @@ Tabular Data](https://cs.brown.edu/people/acrotty/pubs/3318464.3389734.pdf)* by 
  the Mixture of Experts architecture, I decided to keep it into a separate branch 
  reducing code complexity of the `master` and `demo` branches
  
+
  ## Running
  
  I suggest running DeepSqueeze in the `master` branch which is cleaned-up following 
