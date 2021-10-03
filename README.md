@@ -5,7 +5,6 @@ Tabular Data](https://cs.brown.edu/people/acrotty/pubs/3318464.3389734.pdf)* by 
  Alex Galakatos, Yicong Mao, Grace Fan, Xiran Shi, Ugur Cetintemel* from Brown University.
  
  ## Demo (with sound :sound:)
- 
 
 https://user-images.githubusercontent.com/35707606/135630347-6c878951-d9dc-405c-accb-edeb7673a6b0.mp4
 
@@ -36,7 +35,7 @@ https://user-images.githubusercontent.com/35707606/135630347-6c878951-d9dc-405c-
     it using `notebooks/preprocessing.ipynb`
  4. Compress the table with the command: 
  
- `python compress.py -i path/to/input/ -o path/to/output/ -e <error_threshold_percentage>`
+ `python compress.py -i path/to/input.csv -o path/to/output/dir/ -e <error_threshold_percentage>`
  
  Note that the `-e` parameter takes a value between `[0, 100]` with suggested values being:
  `0.5, 1, 5, 10`.

@@ -25,27 +25,28 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     * The failures
     * The minmax scaler
     """
+    # Check that the path ends with a '/'
+    if path[-1] != '/':
+        path = path + '/'
+
     # Create the directory that we will store our model in
     # Will throw a FileExistsError if the directory already exists
+    # TODO: Using the tempfile module seems more fitting
     Path(path).mkdir(parents=True, exist_ok=False)
 
     # Get the state dict of the model
     torch.save(model.state_dict(), path + "model.pth")
 
     # Store the codes in a parquet file
-    codes_df = pd.DataFrame(codes, columns=None)
-    codes_df.columns = codes_df.columns.astype(str)
-    codes_df.to_parquet(path + "codes.parquet", index=False, compression='brotli')
+    parquet_compress(codes, path, name="codes")
 
     # Store the failures in a parquet file
-    failures_df = pd.DataFrame(failures, columns=None)
-    failures_df.columns = failures_df.columns.astype(str)
-    failures_df.to_parquet(path + "failures.parquet", index=False, compression='brotli')
+    parquet_compress(failures, path, name="failures")
 
     # Store the scaler
     joblib.dump(scaler, path + 'scaler.pkl')
 
-    # Store run hyper-parameters (not actually needed)
+    # Store run hyper-parameters (needed for the depth and width of the autoencoder)
     with open(path + 'hyper_params.json', 'w') as outfile:
         json.dump(hyper_params, outfile)
 
@@ -58,6 +59,12 @@ def store_on_disk(path, model, codes, failures, scaler, hyper_params):
     logging.debug(f"Stored files in {path[:-1]}.zip")
 
     return path[:-1] + '.zip'
+
+
+def parquet_compress(values, path, name):
+    codes_df = pd.DataFrame(values, columns=None)
+    codes_df.columns = codes_df.columns.astype(str)
+    codes_df.to_parquet(path + f"{name}.parquet", index=False, compression='brotli')
 
 
 def calculate_compression_ratio(original_file_path, compressed_file_path):
