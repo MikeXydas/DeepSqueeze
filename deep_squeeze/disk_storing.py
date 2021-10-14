@@ -120,4 +120,4 @@ def load_files(comp_path):
     # Since we have loaded everything we need, delete the temp folder
     shutil.rmtree(folder_path + "/")
 
-    return ae, codes, failures, scaler
+    return ae, codes, failures, scaler, hyper_params['error_threshold']

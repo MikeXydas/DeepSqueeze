@@ -19,7 +19,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     comp_file = args.input
 
-    model, codes, failures, scaler = load_files(comp_file)
+    model, codes, failures, scaler, err_thr = load_files(comp_file)
 
     # If a CUDA enabled GPU exists, send both the codes and the model
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     # Get a numpy array of the model_recons + failures
     print(">>> Getting reconstructions from codes...", end='')
-    decompressed_arr = codes_to_table(model, codes, failures)
+    decompressed_arr = codes_to_table(model, codes, failures, err_thr)
     print("Done")
 
     # Invert the minmax scaling

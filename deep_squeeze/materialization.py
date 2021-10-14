@@ -96,8 +96,10 @@ def find_bin_difference(x, recons, error_thr):
     return x_digitized - recons_digitized
 
 
-def codes_to_table(model, codes, failures):
-    recons = model.decoder(codes).cpu().detach().numpy()
-    recons = recons + failures
+def codes_to_table(model, codes, failures, error_thr=0.005):
+    # recons = model.decoder(codes).cpu().detach().numpy()
+    recons = model.decoder(codes)
+    recons_binned = post_binning(recons, error_thr)
+    recons_binned = recons_binned + failures
 
-    return recons
+    return recons_binned
